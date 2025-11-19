@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Berlin Climate Dashboard</title>
+    <meta charset="UTF-8">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 260px;
+            background: #333;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        #sidebar h2 {
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        /* Dropdown */
+        .dropdown {
+            margin-bottom: 15px;
+        }
+
+        .dropdown-btn {
+            background: #444;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-btn:hover {
+            background: #555;
+        }
+
+        .dropdown-content {
+            display: none;
+            background: #555;
+            margin-top: 5px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+        }
+
+        .dropdown-content a:hover {
+            background: #666;
+        }
+
+        /* Sidebar Buttons */
+        .sidebar-btn {
+            background: #444;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .sidebar-btn:hover {
+            background: #555;
+        }
+
+        /* Main Viewer */
+        #main {
+            flex-grow: 1;
+            background: white;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <h2 style="text-align: center;">Dashboard</h2>
+
+        <!-- Heatmap Dropdown -->
+        <div class="dropdown">
+            <div class="dropdown-btn">🌡 Heatmaps</div>
+            <div class="dropdown-content">
+                <a href="../map/berlin_avg_summer_temp_map_2020.html" target="viewer">2020</a>
+                <a href="../map/berlin_avg_summer_temp_map_2021.html" target="viewer">2021</a>
+                <a href="../map/berlin_avg_summer_temp_map_2022.html" target="viewer">2022</a>
+                <a href="../map/berlin_avg_summer_temp_map_2023.html" target="viewer">2023</a>
+                <a href="../map/berlin_avg_summer_temp_map_2024.html" target="viewer">2024</a>
+                <a href="../map/berlin_avg_summer_temp_map.html" target="viewer">Average (2020–2024)</a>
+            </div>
+        </div>
+
+        <!-- Priority Map -->
+        <div class="sidebar-btn" onclick="loadPage('../map/berlin_tree_priority_map.html')">
+            🌳 Tree Priority Map
+        </div>
+
+    </div>
+
+    <!-- Main Viewer -->
+    <div id="main">
+        <iframe name="viewer" src="default_berlin_map.html"></iframe>
+    </div>
+
+    <!-- JS Loader -->
+    <script>
+        function loadPage(page) {
+            document.querySelector("iframe[name='viewer']").src = page;
+        }
+    </script>
+
+</body>
+</html>

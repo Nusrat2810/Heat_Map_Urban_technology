@@ -1,7 +1,7 @@
 """
 Tree Plantation Priority Map
 Removes non-Berlin areas
-Computes green coverage & temperature-based priority using median temperature baseline
+Computes green coverage & temperature-based priority using scientific TPPI equation
 """
 
 import osmnx as ox
@@ -74,25 +74,30 @@ print("✅ Green coverage computed")
 # ---------------- Merge temperature data safely ----------------
 gdf_areas = gdf_areas.merge(df_temp, on="area", how="left")
 
+# ---------------- Compute priority score using scientific TPPI ----------------
+median_temp = gdf_areas["mean_temp_c"].dropna().median()
+max_temp = gdf_areas["mean_temp_c"].dropna().max()
 
-# ---------------- Compute priority score using median temp and normalize ----------------
-median_temp = gdf_areas["mean_temp_c"].dropna().mean()
 print(f"📊 Median temperature: {median_temp:.2f} °C")
+print(f"📊 Max temperature: {max_temp:.2f} °C")
 
 def calc_priority(row):
     temp = row["mean_temp_c"]
     green = row["green_area"]
-    
-    # Low priority if temp <= median
-    if temp <= median_temp or pd.isna(temp):
-        return 1.0
-    
-    # Priority increases with temperature above median, decreases with green coverage
-    temp_factor = temp - median_temp
-    green_factor = 1 - green  # less green → higher priority
-    return temp_factor * green_factor
 
-# Calculate raw priority scores
+    # If no temperature → no priority
+    if pd.isna(temp):
+        return 0.0
+
+    # --- Scientific TPPI Equation ---
+    # TPPI = max( (T_i − T_median) / (T_max − T_median), 0 ) × (1 − G_i)
+    heat_excess = max(temp - median_temp, 0)
+    temp_norm = heat_excess / (max_temp - median_temp) if max_temp > median_temp else 0
+    green_deficit = 1 - green
+
+    return temp_norm * green_deficit
+
+# Calculate priority
 gdf_areas["priority_score_raw"] = gdf_areas.apply(calc_priority, axis=1)
 
 # Normalize between 0 and 1
@@ -102,7 +107,6 @@ if max_score > 0:
 else:
     gdf_areas["priority_score"] = 0.0
 
-# Drop the temporary raw score column
 gdf_areas.drop(columns=["priority_score_raw"], inplace=True)
 
 # ---------------- Back to WGS84 for Folium ----------------
@@ -111,13 +115,14 @@ gdf_areas = gdf_areas.to_crs(epsg=4326)
 # ---------------- Create interactive Folium map ----------------
 print("🗺️ Generating Folium map...")
 
-# Red→Green colormap (inverse YlOrRd)
-colormap = cm.linear.RdYlGn_11.scale(
-    gdf_areas["priority_score"].min(), gdf_areas["priority_score"].max()
+# Corrected colormap: high priority = red, low = green
+colormap = cm.LinearColormap(
+    colors=["green", "yellow", "red"],  # manual reverse
+    vmin=gdf_areas["priority_score"].min(),
+    vmax=gdf_areas["priority_score"].max()
 ).to_step(10)
 colormap.caption = "Tree Plantation Priority (Red = High)"
 
-# Build GeoJSON features
 features = []
 for _, row in gdf_areas.iterrows():
     feature = {
